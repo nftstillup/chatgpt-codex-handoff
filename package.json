@@ -5,7 +5,7 @@
   "type": "module",
   "license": "MIT",
   "engines": {
-    "node": ">=20"
+    "node": "^24.15.0"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -14,15 +14,15 @@
   },
   "packageManager": "pnpm@11.24.0",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "latest",
+    "@modelcontextprotocol/sdk": "1.30.0",
     "express": "^5.1.0",
     "quickjs-emscripten": "0.32.0",
+    "typescript": "5.9.3",
     "zod": "^3.25.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.3",
     "@types/node": "^22.15.0",
-    "typescript": "5.9.3",
     "vitest": "4.1.11"
   }
 }

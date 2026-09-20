@@ -107,7 +107,43 @@ describe("restricted HTTP/MCP handoff using synthetic data", () => {
     expect((await fetch(`${bridge.baseUrl}/admin/tunnel/start`, { method: "POST" })).status).toBe(404);
   });
 
-  it("pairs through OAuth PKCE without granting legacy workspace scopes", async () => {
+  it("limits the browser-origin exception to the same-origin pairing form", async () => {
+    for (const origin of ["https://example.com", "null", "", bridge.baseUrl.replace("http:", "https:"), `${bridge.baseUrl}/`]) {
+      const response = await fetch(`${bridge.baseUrl}/oauth/authorize`, {
+        method: "POST", headers: { origin, "content-type": "application/x-www-form-urlencoded" },
+        body: "request_id=synthetic-invalid",
+      });
+      expect(response.status, origin).toBe(403);
+    }
+    for (const route of ["/mcp", "/local/claim", "/oauth/register", "/oauth/token"]) {
+      const response = await fetch(`${bridge.baseUrl}${route}`, {
+        method: "POST", headers: { origin: bridge.baseUrl, "content-type": "application/x-www-form-urlencoded",
+          authorization: `Bearer ${bridge.workerToken}` }, body: "",
+      });
+      expect(response.status, route).toBe(403);
+    }
+    for (const headers of [
+      { "content-type": "application/json" },
+      { "content-type": "application/x-www-form-urlencoded", "x-forwarded-for": "127.0.0.1" },
+    ]) {
+      const response = await fetch(`${bridge.baseUrl}/oauth/authorize`, {
+        method: "POST", headers: { origin: bridge.baseUrl, ...headers } as Record<string, string>, body: "{}",
+      });
+      expect(response.status).toBe(403);
+    }
+    const getResponse = await fetch(`${bridge.baseUrl}/oauth/authorize`, { headers: { origin: bridge.baseUrl } });
+    expect(getResponse.status).toBe(403);
+    const spoofedHost = await new Promise<number | undefined>((resolve, reject) => {
+      const req = httpRequest(`${bridge.baseUrl}/oauth/authorize`, {
+        method: "POST", headers: { host: "attacker.example", origin: bridge.baseUrl,
+          "content-type": "application/x-www-form-urlencoded" },
+      }, (res) => { res.resume(); res.on("end", () => resolve(res.statusCode)); });
+      req.on("error", reject); req.end("request_id=synthetic-invalid");
+    });
+    expect(spoofedHost).toBe(403);
+  });
+
+  it.each([false, true])("pairs through OAuth PKCE without legacy scopes (browser Origin: %s)", async (browserOrigin) => {
     const registration = await fetch(`${bridge.baseUrl}/oauth/register`, { method: "POST", headers: { "content-type": "application/json" },
       body: JSON.stringify({ client_name: "fake-client", redirect_uris: ["http://localhost/callback"] }) }).then((r) => r.json());
     const { verifier, challenge } = pkceVerifierAndChallenge();
@@ -120,8 +156,11 @@ describe("restricted HTTP/MCP handoff using synthetic data", () => {
     expect(page).not.toContain("(read-only)");
     const requestId = /name="request_id" value="([^"]+)"/.exec(page)![1];
     const pair = await local("pairing").then((r) => r.json());
-    const authorize = await fetch(`${bridge.baseUrl}/oauth/authorize`, { method: "POST", redirect: "manual", headers: { "content-type": "application/x-www-form-urlencoded" },
+    const authorize = await fetch(`${bridge.baseUrl}/oauth/authorize`, { method: "POST", redirect: "manual", headers: {
+      "content-type": "application/x-www-form-urlencoded", ...(browserOrigin ? { origin: bridge.baseUrl } : {}),
+    },
       body: new URLSearchParams({ request_id: requestId, pairing_code: pair.code }) });
+    expect(authorize.status).toBe(302);
     const code = new URL(authorize.headers.get("location")!).searchParams.get("code")!;
     const tokenResponse = await fetch(`${bridge.baseUrl}/oauth/token`, { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({ grant_type: "authorization_code", client_id: registration.client_id, redirect_uri: "http://localhost/callback", code, code_verifier: verifier }) });

@@ -62,11 +62,15 @@ export async function startHandoffBridge(opts: { stateDir: string; projectId: st
       if (wakeRequested) wakeWorker();
     });
   };
-  // This stage is NOT tunnel-ready: reject proxied traffic and browser-origin
-  // script calls. Fixed Host check prevents local DNS rebinding.
+  // Keep the control listener local. Only the same-origin OAuth pairing form
+  // accepts an Origin header; MCP and local-management routes still reject it.
+  // Fixed Host and proxy-header checks also apply to that form.
   app.use((req, res, next) => {
     const forwarded = Object.keys(req.headers).some((h) => h === "forwarded" || h.startsWith("x-forwarded-") || h.startsWith("cf-"));
-    if (!baseUrl || req.get("host") !== new URL(baseUrl).host || req.headers.origin || forwarded) {
+    const pairingForm = req.method === "POST" && req.path === "/oauth/authorize" &&
+      req.headers.origin === baseUrl && req.is("application/x-www-form-urlencoded");
+    const deniedOrigin = req.headers.origin !== undefined && !pairingForm;
+    if (!baseUrl || req.get("host") !== new URL(baseUrl).host || deniedOrigin || forwarded) {
       res.status(403).json({ error: "local_only" });
       return;
     }
