@@ -1,0 +1,28 @@
+﻿{
+  "name": "chatgpt-codex-handoff",
+  "version": "0.1.0",
+  "description": "A restricted, auditable handoff bridge between ChatGPT and Codex.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "packageManager": "pnpm@11.24.0",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "latest",
+    "express": "^5.1.0",
+    "quickjs-emscripten": "0.32.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/node": "^22.15.0",
+    "typescript": "5.9.3",
+    "vitest": "4.1.11"
+  }
+}
