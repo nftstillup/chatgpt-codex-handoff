@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "chatgpt-codex-handoff",
   "version": "0.1.0",
   "description": "A restricted, auditable handoff bridge between ChatGPT and Codex.",

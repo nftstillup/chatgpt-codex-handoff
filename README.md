@@ -1,8 +1,8 @@
-﻿# chatgpt-codex-handoff
+# chatgpt-codex-handoff
 
 A restricted, auditable handoff bridge between ChatGPT-compatible MCP clients and Codex-oriented local workers.
 
-> Status: early open-source candidate. TypeScript build, focused tests, and a synthetic queue demo have been verified locally. Fresh-install and real Codex/private-tunnel re-verification are still pending.
+> Status: early open-source candidate. Clean installation, TypeScript build, focused tests, and a synthetic queue demo have been verified locally. Real Codex/private-tunnel re-verification is still pending.
 
 ## What this project is
 
@@ -99,7 +99,7 @@ Typical commands:
     corepack pnpm test
     node examples/synthetic-demo.mjs
 
-A clean installation from this extracted repository has not yet been independently verified.
+A clean installation from this extracted repository was independently verified on Windows on 2026-09-18 using pnpm 11.24.0.
 
 ## Security model
 
