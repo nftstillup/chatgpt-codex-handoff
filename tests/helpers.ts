@@ -51,7 +51,7 @@ export function git(dir: string, ...args: string[]): string {
 
 export function makeGitRepo(dir: string): void {
   git(dir, "init", "-b", "main");
-  write(dir, "hello.txt", "Hello from Codex with ChatGPT!\n");
+  write(dir, "hello.txt", "Hello from ChatGPT Codex Handoff!\n");
   write(dir, "src/index.ts", "export const answer = 42;\n");
   git(dir, "add", ".");
   git(dir, "commit", "-m", "initial commit");
