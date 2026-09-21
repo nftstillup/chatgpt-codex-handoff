@@ -17,6 +17,23 @@ const disabledFeatures = ["shell_tool", "unified_exec", "apps", "plugins", "remo
   "skill_mcp_dependency_install", "workspace_dependencies"];
 const disabledConfig = Object.fromEntries(disabledFeatures.map((name) => [`features.${name}`, false]));
 
+const workerEnvAllowlist = new Set([
+  "PATH", "PATHEXT", "SYSTEMROOT", "WINDIR", "COMSPEC", "TEMP", "TMP",
+  "HOME", "USERPROFILE", "APPDATA", "LOCALAPPDATA",
+  "LANG", "LC_ALL", "XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME", "XDG_STATE_HOME",
+  "CODEX_HOME", "CODEX_SQLITE_HOME", "CODEX_API_KEY", "CODEX_ACCESS_TOKEN",
+  "CODEX_CA_CERTIFICATE", "SSL_CERT_FILE",
+  "OPENAI_FEDERATION_RULE_ID", "OPENAI_IDENTITY_TOKEN_FILE", "OPENAI_WORKLOAD_IDENTITY_CONTEXT",
+]);
+
+export function buildCodexWorkerEnv(source: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
+  const env: NodeJS.ProcessEnv = {};
+  for (const [key, value] of Object.entries(source)) {
+    if (value !== undefined && workerEnvAllowlist.has(key.toUpperCase())) env[key] = value;
+  }
+  return env;
+}
+
 /** One independent TEXT-ONLY run; optionally persists a new task, never resumes one. */
 export async function runCodexTextTask(opts: {
   executable: string;
@@ -40,7 +57,7 @@ export async function runCodexTextTask(opts: {
   for (const name of disabledFeatures) if (!(opts.workspace && name === "code_mode_host")) args.push("--disable", name);
   if (opts.workspace) args.push("--enable", "code_mode_host");
   args.push("-c", "mcp_servers={}", "-c", 'web_search="disabled"');
-  const proc = spawn(opts.executable, args, { cwd, shell: false, windowsHide: true, stdio: ["pipe", "pipe", "pipe"] });
+  const proc = spawn(opts.executable, args, { cwd, env: buildCodexWorkerEnv(), shell: false, windowsHide: true, stdio: ["pipe", "pipe", "pipe"] });
   return new Promise<WorkerResult>((resolve) => {
     let buffer = "", bytes = 0, threadId: string | undefined, turnId: string | undefined;
     let output = "", finalOutput = "", policyVerified = false;
