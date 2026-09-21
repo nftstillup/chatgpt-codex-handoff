@@ -72,7 +72,7 @@ those paths, and no snapshot-preparation or tunnel setup is included.
 
 ## Verified locally
 
-Verified on 2026-09-19 on Windows with Node.js 24.15.0, Corepack 0.34.6,
+Verified on 2026-09-21 on Windows with Node.js 24.15.0, Corepack 0.34.6,
 pnpm 11.24.0 and TypeScript 5.9.3:
 
 - clean dependency installation with `--frozen-lockfile --ignore-scripts`: passed
@@ -82,7 +82,7 @@ pnpm 11.24.0 and TypeScript 5.9.3:
 - tests/handoff-integration.test.ts: 7 passed, including same-origin OAuth form
   requests and rejection checks for other origins, routes, methods, content types,
   proxy headers and spoofed Host headers
-- total focused tests: 16 / 16 passed
+- total focused tests: 17 / 17 passed
 - synthetic queue demo: passed
 - separate production-only dependency installation and built bridge import: passed
   (no server or worker was started for this import check)
@@ -134,7 +134,7 @@ Typical commands:
     corepack pnpm test
     node examples/synthetic-demo.mjs
 
-The commands above were verified on Windows on 2026-09-19 using the versions
+The commands above were verified on Windows on 2026-09-21 using the versions
 listed under Verified locally.
 
 `typecheck` checks `src`, while Vitest runs the test files. TypeScript is also a
@@ -149,6 +149,7 @@ Important limitations:
 - the optional worker publishes fixed status messages automatically; raw model output remains local, and `succeeded` does not establish human acceptance of that output
 - same-origin form submissions are accepted only on the local OAuth authorization endpoint; browser-origin requests to MCP and local-management endpoints remain blocked
 - read-only model policy is not equivalent to operating-system sandboxing
+- optional workers receive an explicit environment-variable allowlist instead of inheriting the full parent-process environment
 - optional worker execution still requires local review of permissions and environment
 - no production credentials, private runtime state, or user data should be committed to this repository
 
